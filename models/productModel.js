@@ -30,14 +30,15 @@ var productSchema = new mongoose.Schema({
     },
     quantity:{
         type:Number,
+        select:false,
     },
     sold:{
         type:Number,
         default:0,
+        select:false,
     },
     color:{
         type:String,
-        required:true,
     },
     images:{
         type:Array,

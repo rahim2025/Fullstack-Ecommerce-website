@@ -1,7 +1,7 @@
 const mongoose = require('mongoose'); 
 const bcrypt = require('bcrypt');
 
-// Declare the Schema of the Mongo model
+// CREATING A SCHEMA FOR THE USER
 var userSchema = new mongoose.Schema({
     firstname:{
         type:String,
@@ -48,19 +48,43 @@ var userSchema = new mongoose.Schema({
     refreshToken:{
         type:String,
     },
+    passwordChangedAt:{
+        type:Date,
+    },
+    passwordResetToken:{
+        type:String,
+    },
+    passwordResetExpires:{
+        type:Date,
+    },
 },
     {
         timestamps:true,
     }
 );
+
+//HASHING THE PASSWORD BEFORE SAVING IT TO THE DATABASE
 userSchema.pre("save",async function(next){
+if(!this.isModified('password')){  //CHEKING IS PASSWORD IS MODIFIED OR NOT IN UPDATE OPERATION
+    next();
+}
     const salt = await bcrypt.genSaltSync(10);
     this.password = await bcrypt.hash(this.password,salt);
     next();
 });
+
+//COMPARING FUNCTION TO CHECK IF THE ENTERED PASSWORD MATCHES THE HASHED PASSWORD
 userSchema.methods.isPasswordMatched = async function (enteredPassword){
     return await bcrypt.compare(enteredPassword,this.password);
 }
 
-//Export the model
+//CHECKING IF THE PASSWORD IS CHANGED AFTER THE TOKEN WAS ISSUED
+userSchema.methods.createPasswordResetToken = function(JWTTimestamp){
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000; //10 minutes
+    return resetToken;
+}
+
+//EXPORTING THE MODEL
 module.exports = mongoose.model('User', userSchema);

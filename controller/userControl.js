@@ -1,5 +1,6 @@
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
+
 const asyncHandler = require('express-async-handler');
 const { generateToken } = require('../config/jwtToken');
 const validateMongodbId  = require('../utils/validateMongodbId');
@@ -176,8 +177,28 @@ const unblockUser = asyncHandler(async (req,res) =>{
         throw new Error(error);
     }});
 
+const updatePassword = asyncHandler(async (req,res) =>{
+    const {id} = req.user;
+    const {oldPassword,newPassword} = req.body;
+    validateMongodbId(id);
+    try{
+        const user = await User.findById(id);
+        if(user && (await user.isPasswordMatched(oldPassword))){
+            user.password = newPassword;
+            await user.save();
+            res.json({message:'Password updated successfully'});
+        }
+        else{
+            res.status(401).json({message:'Invalid password'});
+        }
+    }
+    catch(error){
+        throw new Error(error);
+    }});
 
-module.exports = {createUser,loginUser,logoutUser,getUsers,getUser,deleteUser,handleRefreshToken,updateUser,blockUser,unblockUser};
+
+module.exports = {createUser,loginUser,logoutUser,getUsers,getUser,deleteUser,handleRefreshToken,updateUser,
+    blockUser,unblockUser,updatePassword};
 
 
     
