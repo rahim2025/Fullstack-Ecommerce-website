@@ -1,5 +1,7 @@
 const mongoose = require('mongoose'); 
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+
 
 // CREATING A SCHEMA FOR THE USER
 var userSchema = new mongoose.Schema({
@@ -79,8 +81,8 @@ userSchema.methods.isPasswordMatched = async function (enteredPassword){
 }
 
 //CHECKING IF THE PASSWORD IS CHANGED AFTER THE TOKEN WAS ISSUED
-userSchema.methods.createPasswordResetToken = function(JWTTimestamp){
-    const resetToken = crypto.randomBytes(32).toString('hex');
+userSchema.methods.createPasswordResetToken = function(){
+    const resetToken = crypto.randomBytes(32).toString('hex'); 
     this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     this.passwordResetExpires = Date.now() + 10 * 60 * 1000; //10 minutes
     return resetToken;
